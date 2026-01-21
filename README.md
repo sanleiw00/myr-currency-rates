@@ -2,6 +2,8 @@
 
 A lightweight, single-file web application for viewing live exchange rates with Malaysian Ringgit (MYR) as the base currency.
 
+**Live Demo:** [https://sanleiw00.github.io/myr-currency-rates/](https://sanleiw00.github.io/myr-currency-rates/)
+
 ## Quick Start
 
 Open `index.html` in any modern web browser.
