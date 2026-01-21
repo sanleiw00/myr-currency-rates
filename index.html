@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Currency exchange rates viewer with MYR as base currency">
+    <title>MYR Currency Rates Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* ==========================================
+           Global Styles & Reset
+           ========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1e40af;
+            --primary-hover: #1e3a8a;
+            --success-color: #059669;
+            --error-color: #dc2626;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #d1d5db;
+            --hover-bg: #f3f4f6;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: whitesmoke;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        /* ==========================================
+           Container & Layout
+           ========================================== */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        /* ==========================================
+           Header Styles
+           ========================================== */
+        header {
+            background: linear-gradient(135deg, #4c51bf 0%, #5b21b6 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        /* ==========================================
+           Loading Spinner
+           ========================================== */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ==========================================
+           Error Message
+           ========================================== */
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 20px;
+            margin: 20px 30px;
+            border-radius: 8px;
+            border-left: 4px solid #dc2626;
+            font-weight: 600;
+        }
+
+        /* ==========================================
+           Last Updated Info
+           ========================================== */
+        .last-updated {
+            background: #bfdbfe;
+            color: #1e3a8a;
+            padding: 12px 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* ==========================================
+           Search Box Styles
+           ========================================== */
+        .search-container {
+            padding: 20px 30px 0;
+        }
+
+        .search-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .clear-all-btn {
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+        }
+
+        .clear-all-btn:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .clear-all-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .search-results-count {
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .search-results-count.hidden {
+            display: none;
+        }
+
+        .search-results-count {
+            color: var(--text-primary);
+        }
+
+        /* ==========================================
+           Table Styles
+           ========================================== */
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        thead th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        thead th:first-child {
+            padding-left: 20px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody td {
+            padding: 16px 12px;
+            color: var(--text-primary);
+        }
+
+        tbody td:first-child {
+            padding-left: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        tbody td:nth-child(4),
+        tbody td:nth-child(5) {
+            font-family: 'Courier New', monospace;
+            color: var(--text-secondary);
+        }
+
+        /* Pin button styles */
+        .pin-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+            opacity: 0.4;
+            color: #9ca3af;
+        }
+
+        .pin-btn:hover {
+            transform: scale(1.2);
+            opacity: 0.7;
+        }
+
+        .pin-btn.pinned {
+            opacity: 1;
+            color: #4c51bf;
+            transform: rotate(45deg);
+        }
+
+        .pin-btn.pinned:hover {
+            transform: scale(1.2) rotate(45deg);
+            color: #5b21b6;
+        }
+
+        /* Pinned row styles */
+        tbody tr.pinned {
+            background-color: #fef3c7;
+            border-left: 4px solid #d97706;
+        }
+
+        tbody tr.pinned:hover {
+            background-color: #fde68a;
+        }
+
+        tbody tr.pinned .pin-btn {
+            opacity: 1;
+        }
+
+        /* Converter input styles */
+        .converter-input {
+            width: 100%;
+            max-width: 120px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            text-align: right;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .converter-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .converter-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+            font-size: 0.85rem;
+        }
+
+        /* ==========================================
+           Footer Styles
+           ========================================== */
+        footer {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        footer p {
+            margin: 4px 0;
+        }
+
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .cache-info {
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+
+        /* ==========================================
+           Responsive Design
+           ========================================== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+            }
+
+            header {
+                padding: 30px 20px;
+            }
+
+            .search-container {
+                padding: 15px 20px 0;
+            }
+
+            .search-input {
+                font-size: 0.9rem;
+                padding: 10px 12px;
+            }
+
+            .clear-all-btn {
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+
+            .table-container {
+                padding: 20px 15px;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            thead th,
+            tbody td {
+                padding: 12px 6px;
+            }
+
+            thead th:first-child,
+            tbody td:first-child {
+                padding-left: 12px;
+            }
+
+            .converter-input {
+                max-width: 100px;
+                font-size: 0.8rem;
+                padding: 4px 6px;
+            }
+
+            footer {
+                padding: 15px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .search-container {
+                padding: 10px 15px 0;
+            }
+
+            .search-wrapper {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .search-input {
+                font-size: 0.85rem;
+                padding: 8px 10px;
+            }
+
+            .clear-all-btn {
+                width: 100%;
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+
+            table {
+                font-size: 0.7rem;
+            }
+
+            thead th,
+            tbody td {
+                padding: 8px 3px;
+            }
+
+            thead th:first-child,
+            tbody td:first-child {
+                padding-left: 6px;
+            }
+
+            /* Hide country column on very small screens to save space */
+            thead th:nth-child(3),
+            tbody td:nth-child(3) {
+                display: none;
+            }
+
+            /* Hide converter columns on very small screens */
+            thead th:nth-child(6),
+            tbody td:nth-child(6),
+            thead th:nth-child(7),
+            tbody td:nth-child(7) {
+                display: none;
+            }
+
+            /* Make pin button smaller on mobile */
+            .pin-btn {
+                font-size: 1rem;
+                padding: 2px 4px;
+            }
+
+            .converter-input {
+                max-width: 80px;
+                font-size: 0.75rem;
+                padding: 3px 4px;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 900px) {
+            /* Show converter columns but make them more compact on medium screens */
+            .converter-input {
+                max-width: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MYR Currency Exchange Rates</h1>
+            <p class="subtitle">Malaysian Ringgit Exchange Rate Viewer</p>
+        </header>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading exchange rates...</p>
+        </div>
+
+        <!-- Error message container -->
+        <div id="error-message" class="error-message hidden"></div>
+
+        <!-- Last updated info -->
+        <div id="last-updated" class="last-updated hidden"></div>
+
+        <!-- Search box -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search by code, country, or currency name (e.g., Dollar, Euro, Yen)..."
+                    autocomplete="off"
+                >
+                <button id="clear-all-btn" class="clear-all-btn" title="Clear all converter inputs">
+                    Clear All
+                </button>
+            </div>
+            <div id="search-results-count" class="search-results-count hidden"></div>
+        </div>
+
+        <!-- Currency table -->
+        <div class="table-container">
+            <table id="currency-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px; text-align: center;">Pin</th>
+                        <th>Currency</th>
+                        <th>Country/Region</th>
+                        <th>1 MYR =</th>
+                        <th>= 1 MYR</th>
+                        <th style="min-width: 120px;">MYR →</th>
+                        <th style="min-width: 120px;">→ MYR</th>
+                    </tr>
+                </thead>
+                <tbody id="currency-tbody">
+                    <!-- Currency rows will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>Data provided by <a href="https://www.frankfurter.app" target="_blank" rel="noopener">Frankfurter API</a> (ECB rates) • Unlimited & Free</p>
+            <p class="cache-info">Always showing the latest exchange rates • No rate limits</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==========================================
+        // Configuration Constants
+        // ==========================================
+        const API_URLS = [
+            'https://api.frankfurter.app/latest?from=MYR',
+            'https://api.exchangerate.host/latest?base=MYR'
+        ];
+        const CACHE_KEY = 'myr_exchange_rates';
+        const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+        const BASE_CURRENCY = 'MYR';
+        const PINNED_CURRENCIES_KEY = 'pinned_currencies';
+
+        // Currency code to country/region name mapping
+        const CURRENCY_NAMES = {
+            'AED': 'UAE Dirham', 'AFN': 'Afghanistan', 'ALL': 'Albania', 'AMD': 'Armenia',
+            'ANG': 'Netherlands Antilles', 'AOA': 'Angola', 'ARS': 'Argentina', 'AUD': 'Australia',
+            'AWG': 'Aruba', 'AZN': 'Azerbaijan', 'BAM': 'Bosnia', 'BBD': 'Barbados',
+            'BDT': 'Bangladesh', 'BGN': 'Bulgaria', 'BHD': 'Bahrain', 'BIF': 'Burundi',
+            'BMD': 'Bermuda', 'BND': 'Brunei', 'BOB': 'Bolivia', 'BRL': 'Brazil',
+            'BSD': 'Bahamas', 'BTN': 'Bhutan', 'BWP': 'Botswana', 'BYN': 'Belarus',
+            'BZD': 'Belize', 'CAD': 'Canada', 'CDF': 'Congo', 'CHF': 'Switzerland',
+            'CLP': 'Chile', 'CNY': 'China', 'COP': 'Colombia', 'CRC': 'Costa Rica',
+            'CUP': 'Cuba', 'CVE': 'Cape Verde', 'CZK': 'Czech Republic', 'DJF': 'Djibouti',
+            'DKK': 'Denmark', 'DOP': 'Dominican Republic', 'DZD': 'Algeria', 'EGP': 'Egypt',
+            'ERN': 'Eritrea', 'ETB': 'Ethiopia', 'EUR': 'Euro / Europe', 'FJD': 'Fiji',
+            'FKP': 'Falkland Islands', 'FOK': 'Faroe Islands', 'GBP': 'United Kingdom', 'GEL': 'Georgia',
+            'GGP': 'Guernsey', 'GHS': 'Ghana', 'GIP': 'Gibraltar', 'GMD': 'Gambia',
+            'GNF': 'Guinea', 'GTQ': 'Guatemala', 'GYD': 'Guyana', 'HKD': 'Hong Kong',
+            'HNL': 'Honduras', 'HRK': 'Croatia', 'HTG': 'Haiti', 'HUF': 'Hungary',
+            'IDR': 'Indonesia', 'ILS': 'Israel', 'IMP': 'Isle of Man', 'INR': 'India',
+            'IQD': 'Iraq', 'IRR': 'Iran', 'ISK': 'Iceland', 'JEP': 'Jersey',
+            'JMD': 'Jamaica', 'JOD': 'Jordan', 'JPY': 'Japan', 'KES': 'Kenya',
+            'KGS': 'Kyrgyzstan', 'KHR': 'Cambodia', 'KID': 'Kiribati', 'KMF': 'Comoros',
+            'KRW': 'South Korea', 'KWD': 'Kuwait', 'KYD': 'Cayman Islands', 'KZT': 'Kazakhstan',
+            'LAK': 'Laos', 'LBP': 'Lebanon', 'LKR': 'Sri Lanka', 'LRD': 'Liberia',
+            'LSL': 'Lesotho', 'LYD': 'Libya', 'MAD': 'Morocco', 'MDL': 'Moldova',
+            'MGA': 'Madagascar', 'MKD': 'North Macedonia', 'MMK': 'Myanmar', 'MNT': 'Mongolia',
+            'MOP': 'Macau', 'MRU': 'Mauritania', 'MUR': 'Mauritius', 'MVR': 'Maldives',
+            'MWK': 'Malawi', 'MXN': 'Mexico', 'MZN': 'Mozambique', 'NAD': 'Namibia',
+            'NGN': 'Nigeria', 'NIO': 'Nicaragua', 'NOK': 'Norway', 'NPR': 'Nepal',
+            'NZD': 'New Zealand', 'OMR': 'Oman', 'PAB': 'Panama', 'PEN': 'Peru',
+            'PGK': 'Papua New Guinea', 'PHP': 'Philippines', 'PKR': 'Pakistan', 'PLN': 'Poland',
+            'PYG': 'Paraguay', 'QAR': 'Qatar', 'RON': 'Romania', 'RSD': 'Serbia',
+            'RUB': 'Russia', 'RWF': 'Rwanda', 'SAR': 'Saudi Arabia', 'SBD': 'Solomon Islands',
+            'SCR': 'Seychelles', 'SDG': 'Sudan', 'SEK': 'Sweden', 'SGD': 'Singapore',
+            'SHP': 'Saint Helena', 'SLE': 'Sierra Leone', 'SLL': 'Sierra Leone', 'SOS': 'Somalia',
+            'SRD': 'Suriname', 'SSP': 'South Sudan', 'STN': 'São Tomé and Príncipe', 'SYP': 'Syria',
+            'SZL': 'Eswatini', 'THB': 'Thailand', 'TJS': 'Tajikistan', 'TMT': 'Turkmenistan',
+            'TND': 'Tunisia', 'TOP': 'Tonga', 'TRY': 'Turkey', 'TTD': 'Trinidad and Tobago',
+            'TVD': 'Tuvalu', 'TWD': 'Taiwan', 'TZS': 'Tanzania', 'UAH': 'Ukraine',
+            'UGX': 'Uganda', 'USD': 'United States', 'UYU': 'Uruguay', 'UZS': 'Uzbekistan',
+            'VES': 'Venezuela', 'VND': 'Vietnam', 'VUV': 'Vanuatu', 'WST': 'Samoa',
+            'CLF': 'Chilean Unit of Account', 'CNH': 'China (Offshore)', 'CNF': 'Congo (Franc)',
+            'XAF': 'Central African CFA', 'XCD': 'East Caribbean', 'XDR': 'IMF', 'XOF': 'West African CFA',
+            'XPF': 'CFP Franc', 'XCG': 'Caribbean Guilder', 'YER': 'Yemen', 'ZAR': 'South Africa', 'ZMW': 'Zambia',
+            'ZWG': 'Zimbabwe Gold', 'ZWL': 'Zimbabwe'
+        };
+
+        // Currency code to full currency name mapping (for search)
+        const CURRENCY_FULL_NAMES = {
+            'AED': 'Dirham', 'AFN': 'Afghani', 'ALL': 'Lek', 'AMD': 'Dram',
+            'ANG': 'Guilder', 'AOA': 'Kwanza', 'ARS': 'Peso', 'AUD': 'Dollar',
+            'AWG': 'Florin', 'AZN': 'Manat', 'BAM': 'Mark', 'BBD': 'Dollar',
+            'BDT': 'Taka', 'BGN': 'Lev', 'BHD': 'Dinar', 'BIF': 'Franc',
+            'BMD': 'Dollar', 'BND': 'Dollar', 'BOB': 'Boliviano', 'BRL': 'Real',
+            'BSD': 'Dollar', 'BTN': 'Ngultrum', 'BWP': 'Pula', 'BYN': 'Ruble',
+            'BZD': 'Dollar', 'CAD': 'Dollar', 'CDF': 'Franc', 'CHF': 'Franc',
+            'CLP': 'Peso', 'CNY': 'Yuan', 'COP': 'Peso', 'CRC': 'Colon',
+            'CUP': 'Peso', 'CVE': 'Escudo', 'CZK': 'Koruna', 'DJF': 'Franc',
+            'DKK': 'Krone', 'DOP': 'Peso', 'DZD': 'Dinar', 'EGP': 'Pound',
+            'ERN': 'Nakfa', 'ETB': 'Birr', 'EUR': 'Euro', 'FJD': 'Dollar',
+            'FKP': 'Pound', 'FOK': 'Krona', 'GBP': 'Pound Sterling', 'GEL': 'Lari',
+            'GGP': 'Pound', 'GHS': 'Cedi', 'GIP': 'Pound', 'GMD': 'Dalasi',
+            'GNF': 'Franc', 'GTQ': 'Quetzal', 'GYD': 'Dollar', 'HKD': 'Dollar',
+            'HNL': 'Lempira', 'HRK': 'Kuna', 'HTG': 'Gourde', 'HUF': 'Forint',
+            'IDR': 'Rupiah', 'ILS': 'Shekel', 'IMP': 'Pound', 'INR': 'Rupee',
+            'IQD': 'Dinar', 'IRR': 'Rial', 'ISK': 'Krona', 'JEP': 'Pound',
+            'JMD': 'Dollar', 'JOD': 'Dinar', 'JPY': 'Yen', 'KES': 'Shilling',
+            'KGS': 'Som', 'KHR': 'Riel', 'KID': 'Dollar', 'KMF': 'Franc',
+            'KRW': 'Won', 'KWD': 'Dinar', 'KYD': 'Dollar', 'KZT': 'Tenge',
+            'LAK': 'Kip', 'LBP': 'Pound', 'LKR': 'Rupee', 'LRD': 'Dollar',
+            'LSL': 'Loti', 'LYD': 'Dinar', 'MAD': 'Dirham', 'MDL': 'Leu',
+            'MGA': 'Ariary', 'MKD': 'Denar', 'MMK': 'Kyat', 'MNT': 'Tugrik',
+            'MOP': 'Pataca', 'MRU': 'Ouguiya', 'MUR': 'Rupee', 'MVR': 'Rufiyaa',
+            'MWK': 'Kwacha', 'MXN': 'Peso', 'MYR': 'Ringgit', 'MZN': 'Metical',
+            'NAD': 'Dollar', 'NGN': 'Naira', 'NIO': 'Cordoba', 'NOK': 'Krone',
+            'NPR': 'Rupee', 'NZD': 'Dollar', 'OMR': 'Rial', 'PAB': 'Balboa',
+            'PEN': 'Sol', 'PGK': 'Kina', 'PHP': 'Peso', 'PKR': 'Rupee',
+            'PLN': 'Zloty', 'PYG': 'Guarani', 'QAR': 'Riyal', 'RON': 'Leu',
+            'RSD': 'Dinar', 'RUB': 'Ruble', 'RWF': 'Franc', 'SAR': 'Riyal',
+            'SBD': 'Dollar', 'SCR': 'Rupee', 'SDG': 'Pound', 'SEK': 'Krona',
+            'SGD': 'Dollar', 'SHP': 'Pound', 'SLE': 'Leone', 'SLL': 'Leone',
+            'SOS': 'Shilling', 'SRD': 'Dollar', 'SSP': 'Pound', 'STN': 'Dobra',
+            'SYP': 'Pound', 'SZL': 'Lilangeni', 'THB': 'Baht', 'TJS': 'Somoni',
+            'TMT': 'Manat', 'TND': 'Dinar', 'TOP': 'Paanga', 'TRY': 'Lira',
+            'TTD': 'Dollar', 'TVD': 'Dollar', 'TWD': 'Dollar', 'TZS': 'Shilling',
+            'UAH': 'Hryvnia', 'UGX': 'Shilling', 'USD': 'Dollar', 'UYU': 'Peso',
+            'UZS': 'Som', 'VES': 'Bolivar', 'VND': 'Dong', 'VUV': 'Vatu',
+            'WST': 'Tala', 'CLF': 'UF', 'CNH': 'Yuan', 'CNF': 'Franc',
+            'XAF': 'Franc', 'XCD': 'Dollar', 'XDR': 'SDR', 'XOF': 'Franc',
+            'XPF': 'Franc', 'XCG': 'Guilder', 'YER': 'Rial', 'ZAR': 'Rand',
+            'ZMW': 'Kwacha', 'ZWG': 'Gold', 'ZWL': 'Dollar'
+        };
+
+        // ==========================================
+        // DOM Elements
+        // ==========================================
+        const loadingElement = document.getElementById('loading');
+        const errorMessageElement = document.getElementById('error-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const currencyTbody = document.getElementById('currency-tbody');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsCount = document.getElementById('search-results-count');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+
+        // ==========================================
+        // Main Application Logic
+        // ==========================================
+
+        /**
+         * Initialize the application on page load
+         */
+        function init() {
+            loadExchangeRates();
+            setupSearchListener();
+            setupClearAllListener();
+        }
+
+        /**
+         * Set up search input event listener
+         */
+        function setupSearchListener() {
+            searchInput.addEventListener('input', handleSearch);
+        }
+
+        /**
+         * Set up clear all button event listener
+         */
+        function setupClearAllListener() {
+            clearAllBtn.addEventListener('click', clearAllConverterInputs);
+        }
+
+        /**
+         * Clear all converter input fields and search box
+         */
+        function clearAllConverterInputs() {
+            const allInputs = currencyTbody.querySelectorAll('.converter-input');
+            
+            // Clear all input values
+            allInputs.forEach(input => {
+                input.value = '';
+            });
+            
+            // Clear search input
+            searchInput.value = '';
+            
+            // Reset search filter to show all currencies
+            handleSearch();
+        }
+
+        /**
+         * Handle search input and filter table rows
+         */
+        function handleSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const rows = currencyTbody.querySelectorAll('tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const currency = row.getAttribute('data-currency') || '';
+                const country = row.getAttribute('data-country') || '';
+                const currencyName = row.getAttribute('data-currency-name') || '';
+                
+                // Check if search term matches currency code, country name, or currency name
+                const matches = currency.includes(searchTerm) || 
+                               country.includes(searchTerm) || 
+                               currencyName.includes(searchTerm);
+                
+                if (matches) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update search results count
+            updateSearchResults(searchTerm, visibleCount, rows.length);
+        }
+
+        /**
+         * Update search results count display
+         * @param {string} searchTerm - Current search term
+         * @param {number} visibleCount - Number of visible rows
+         * @param {number} totalCount - Total number of rows
+         */
+        function updateSearchResults(searchTerm, visibleCount, totalCount) {
+            if (searchTerm === '') {
+                searchResultsCount.classList.add('hidden');
+            } else {
+                searchResultsCount.classList.remove('hidden');
+                if (visibleCount === 0) {
+                    searchResultsCount.textContent = 'No currencies found';
+                    searchResultsCount.style.color = 'var(--error-color)';
+                } else if (visibleCount === totalCount) {
+                    searchResultsCount.textContent = `✓ Showing all ${totalCount} currencies`;
+                    searchResultsCount.style.color = 'var(--success-color)';
+                } else {
+                    searchResultsCount.textContent = `Showing ${visibleCount} of ${totalCount} currencies`;
+                    searchResultsCount.style.color = 'var(--text-secondary)';
+                }
+            }
+        }
+
+        // ==========================================
+        // Pin/Unpin Functions
+        // ==========================================
+
+        /**
+         * Get list of pinned currencies from localStorage
+         * @returns {Array<string>} Array of pinned currency codes
+         */
+        function getPinnedCurrencies() {
+            try {
+                const pinned = localStorage.getItem(PINNED_CURRENCIES_KEY);
+                return pinned ? JSON.parse(pinned) : [];
+            } catch (error) {
+                console.error('Error reading pinned currencies:', error);
+                return [];
+            }
+        }
+
+        /**
+         * Save pinned currencies to localStorage
+         * @param {Array<string>} pinnedCurrencies - Array of currency codes to save
+         */
+        function savePinnedCurrencies(pinnedCurrencies) {
+            try {
+                localStorage.setItem(PINNED_CURRENCIES_KEY, JSON.stringify(pinnedCurrencies));
+            } catch (error) {
+                console.error('Error saving pinned currencies:', error);
+            }
+        }
+
+        /**
+         * Toggle pin status for a currency
+         * @param {string} currency - Currency code to toggle
+         */
+        function togglePin(currency) {
+            const pinnedCurrencies = getPinnedCurrencies();
+            const index = pinnedCurrencies.indexOf(currency);
+            
+            if (index === -1) {
+                // Pin the currency
+                pinnedCurrencies.push(currency);
+            } else {
+                // Unpin the currency
+                pinnedCurrencies.splice(index, 1);
+            }
+            
+            savePinnedCurrencies(pinnedCurrencies);
+            
+            // Reload the display with updated pin status
+            reloadDisplay();
+        }
+
+        /**
+         * Reload the currency display from cached data
+         */
+        function reloadDisplay() {
+            const cachedData = getCachedData();
+            if (cachedData) {
+                displayExchangeRates(cachedData);
+                // Re-apply search filter if there's a search term
+                if (searchInput.value.trim() !== '') {
+                    handleSearch();
+                }
+            }
+        }
+
+        /**
+         * Main function to load exchange rates
+         * Always fetches fresh data from API
+         */
+        async function loadExchangeRates() {
+            try {
+                // Show loading indicator
+                showLoading();
+                hideError();
+
+                // Always fetch fresh data from API
+                const data = await fetchFromAPI();
+                cacheData(data); // Cache as backup
+                displayExchangeRates(data);
+                displayLastUpdated(Date.now());
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading exchange rates:', error);
+                hideLoading();
+                
+                // Try to use cached data as fallback if API fails
+                const cachedData = getCachedData();
+                if (cachedData) {
+                    displayExchangeRates(cachedData);
+                    displayLastUpdated(cachedData.timestamp);
+                    showError(`Unable to fetch latest rates. Showing cached data from earlier. Error: ${error.message}`);
+                } else {
+                    showError(`Failed to load exchange rates: ${error.message}. Please check your internet connection and try again later.`);
+                }
+            }
+        }
+
+        /**
+         * Fetch exchange rates from the API with fallback support
+         * @returns {Promise<Object>} API response data
+         */
+        async function fetchFromAPI() {
+            let lastError = null;
+            
+            // Try each API endpoint
+            for (let i = 0; i < API_URLS.length; i++) {
+                const apiUrl = API_URLS[i];
+                
+                try {
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Check if success field exists and is false (for APIs that use it)
+                    if (data.success === false) {
+                        const errorMsg = data.error?.info || data.error?.message || JSON.stringify(data.error) || 'Unknown API error';
+                        throw new Error(`API Error: ${errorMsg}`);
+                    }
+                    
+                    // Check if rates data exists (required for all APIs)
+                    if (!data.rates) {
+                        throw new Error('No rates data in API response');
+                    }
+                    
+                    // Ensure we have the base currency in the response
+                    if (!data.base && !data.from) {
+                        throw new Error('Invalid API response format');
+                    }
+                    
+                    return data;
+                    
+                } catch (error) {
+                    console.warn(`✗ API ${i + 1} failed:`, error.message);
+                    lastError = error;
+                    // Continue to next API
+                }
+            }
+            
+            // If all APIs failed, throw the last error
+            throw new Error(`All API endpoints failed. Last error: ${lastError.message}`);
+        }
+
+        /**
+         * Cache data in localStorage with timestamp
+         * @param {Object} data - Exchange rate data to cache
+         */
+        function cacheData(data) {
+            const cacheObject = {
+                data: data,
+                timestamp: Date.now()
+            };
+            
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheObject));
+            } catch (error) {
+                console.error('Failed to cache data:', error);
+                // Continue execution even if caching fails
+            }
+        }
+
+        /**
+         * Retrieve cached data from localStorage if still valid
+         * @returns {Object|null} Cached data or null if cache is invalid/expired
+         */
+        function getCachedData() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                
+                if (!cached) {
+                    return null;
+                }
+                
+                const cacheObject = JSON.parse(cached);
+                const currentTime = Date.now();
+                const cacheAge = currentTime - cacheObject.timestamp;
+                
+                // Check if cache is still valid (less than 1 hour old)
+                if (cacheAge < CACHE_DURATION) {
+                    return cacheObject.data;
+                } else {
+                    localStorage.removeItem(CACHE_KEY);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error reading cache:', error);
+                localStorage.removeItem(CACHE_KEY);
+                return null;
+            }
+        }
+
+        /**
+         * Display exchange rates in the table
+         * @param {Object} data - Exchange rate data from API
+         */
+        function displayExchangeRates(data) {
+            const rates = data.rates;
+            
+            if (!rates) {
+                throw new Error('No rates data available');
+            }
+            
+            // Clear existing table content
+            currencyTbody.innerHTML = '';
+            
+            // Get pinned currencies
+            const pinnedCurrencies = getPinnedCurrencies();
+            
+            // Convert rates object to array and separate pinned/unpinned
+            const allCurrencies = Object.keys(rates)
+                .filter(currency => currency !== BASE_CURRENCY); // Exclude MYR
+            
+            const pinned = allCurrencies
+                .filter(currency => pinnedCurrencies.includes(currency))
+                .sort();
+            
+            const unpinned = allCurrencies
+                .filter(currency => !pinnedCurrencies.includes(currency))
+                .sort();
+            
+            // Display pinned currencies first, then unpinned
+            const sortedCurrencies = [...pinned, ...unpinned];
+            
+            // Create table rows for each currency
+            sortedCurrencies.forEach(currency => {
+                const rate = rates[currency];
+                const isPinned = pinnedCurrencies.includes(currency);
+                const row = createCurrencyRow(currency, rate, isPinned);
+                currencyTbody.appendChild(row);
+            });
+        }
+
+        /**
+         * Create a table row for a currency
+         * @param {string} currency - Currency code (e.g., 'USD')
+         * @param {number} rate - Exchange rate from MYR to currency
+         * @param {boolean} isPinned - Whether the currency is pinned
+         * @returns {HTMLElement} Table row element
+         */
+        function createCurrencyRow(currency, rate, isPinned = false) {
+            const row = document.createElement('tr');
+            const countryName = CURRENCY_NAMES[currency] || 'Unknown';
+            const currencyFullName = CURRENCY_FULL_NAMES[currency] || '';
+            
+            // Store searchable data as attributes
+            row.setAttribute('data-currency', currency.toLowerCase());
+            row.setAttribute('data-country', countryName.toLowerCase());
+            row.setAttribute('data-currency-name', currencyFullName.toLowerCase());
+            
+            // Add pinned class if applicable
+            if (isPinned) {
+                row.classList.add('pinned');
+            }
+            
+            // Pin button column
+            const pinCell = document.createElement('td');
+            pinCell.style.textAlign = 'center';
+            const pinBtn = document.createElement('button');
+            pinBtn.className = isPinned ? 'pin-btn pinned' : 'pin-btn';
+            pinBtn.innerHTML = '<i class="fa-solid fa-thumbtack"></i>';
+            pinBtn.title = isPinned ? 'Unpin currency' : 'Pin currency';
+            pinBtn.setAttribute('data-currency', currency);
+            pinBtn.addEventListener('click', () => togglePin(currency));
+            pinCell.appendChild(pinBtn);
+            
+            // Currency code column
+            const currencyCell = document.createElement('td');
+            currencyCell.textContent = currency;
+            
+            // Country/Region column
+            const countryCell = document.createElement('td');
+            countryCell.textContent = countryName;
+            countryCell.style.color = 'var(--text-secondary)';
+            
+            // 1 MYR = ? Currency column
+            const myrToCurrencyCell = document.createElement('td');
+            const myrToCurrency = rate;
+            myrToCurrencyCell.textContent = formatRate(myrToCurrency);
+            
+            // ? Currency = 1 MYR column
+            const currencyToMyrCell = document.createElement('td');
+            const currencyToMyr = 1 / rate;
+            currencyToMyrCell.textContent = formatRate(currencyToMyr);
+            
+            // MYR to Currency converter column
+            const myrConverterCell = document.createElement('td');
+            const myrInput = document.createElement('input');
+            myrInput.type = 'number';
+            myrInput.className = 'converter-input';
+            myrInput.placeholder = 'Enter MYR';
+            myrInput.step = '0.01';
+            myrInput.min = '0';
+            
+            // Currency to MYR converter column
+            const currencyConverterCell = document.createElement('td');
+            const currencyInput = document.createElement('input');
+            currencyInput.type = 'number';
+            currencyInput.className = 'converter-input';
+            currencyInput.placeholder = `Enter ${currency}`;
+            currencyInput.step = '0.01';
+            currencyInput.min = '0';
+            
+            // Link the two inputs - typing in one updates the other
+            let isUpdating = false; // Prevent infinite loop
+            
+            myrInput.addEventListener('input', (e) => {
+                if (isUpdating) return;
+                isUpdating = true;
+                
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value >= 0) {
+                    const result = value * rate;
+                    currencyInput.value = result.toFixed(2);
+                } else {
+                    currencyInput.value = '';
+                }
+                
+                isUpdating = false;
+            });
+            
+            currencyInput.addEventListener('input', (e) => {
+                if (isUpdating) return;
+                isUpdating = true;
+                
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value >= 0) {
+                    const result = value / rate;
+                    myrInput.value = result.toFixed(2);
+                } else {
+                    myrInput.value = '';
+                }
+                
+                isUpdating = false;
+            });
+            
+            myrConverterCell.appendChild(myrInput);
+            currencyConverterCell.appendChild(currencyInput);
+            
+            // Append cells to row
+            row.appendChild(pinCell);
+            row.appendChild(currencyCell);
+            row.appendChild(countryCell);
+            row.appendChild(myrToCurrencyCell);
+            row.appendChild(currencyToMyrCell);
+            row.appendChild(myrConverterCell);
+            row.appendChild(currencyConverterCell);
+            
+            return row;
+        }
+
+        /**
+         * Format rate to 4 decimal places
+         * @param {number} rate - Exchange rate to format
+         * @returns {string} Formatted rate string
+         */
+        function formatRate(rate) {
+            return rate.toFixed(4);
+        }
+
+        /**
+         * Display last updated timestamp
+         * @param {number} timestamp - Unix timestamp in milliseconds
+         */
+        function displayLastUpdated(timestamp) {
+            const date = new Date(timestamp);
+            const formattedDate = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            lastUpdatedElement.textContent = `Last updated: ${formattedDate}`;
+            lastUpdatedElement.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // UI Helper Functions
+        // ==========================================
+
+        /**
+         * Show loading indicator
+         */
+        function showLoading() {
+            loadingElement.classList.remove('hidden');
+        }
+
+        /**
+         * Hide loading indicator
+         */
+        function hideLoading() {
+            loadingElement.classList.add('hidden');
+        }
+
+        /**
+         * Show error message
+         * @param {string} message - Error message to display
+         */
+        function showError(message) {
+            errorMessageElement.textContent = `⚠️ ${message}`;
+            errorMessageElement.classList.remove('hidden');
+        }
+
+        /**
+         * Hide error message
+         */
+        function hideError() {
+            errorMessageElement.classList.add('hidden');
+        }
+
+        // ==========================================
+        // Initialize Application
+        // ==========================================
+        // Start the application when DOM is fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
