@@ -450,17 +450,6 @@
             border-color: var(--primary-color);
         }
 
-        .modal-result {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        .modal-result strong {
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-
         /* Mobile: Make rows clickable */
         @media (max-width: 480px) {
             tbody tr {
@@ -714,13 +703,11 @@
                     <div class="modal-input-group">
                         <label for="modal-myr-input">MYR Amount</label>
                         <input type="number" id="modal-myr-input" placeholder="Enter MYR" step="0.01" min="0">
-                        <div class="modal-result" id="modal-myr-result"></div>
                     </div>
                     
                     <div class="modal-input-group">
                         <label for="modal-currency-input" id="modal-currency-label">Currency Amount</label>
                         <input type="number" id="modal-currency-input" placeholder="Enter amount" step="0.01" min="0">
-                        <div class="modal-result" id="modal-currency-result"></div>
                     </div>
                 </div>
             </div>
@@ -854,8 +841,6 @@
         const modalMyrInput = document.getElementById('modal-myr-input');
         const modalCurrencyInput = document.getElementById('modal-currency-input');
         const modalCurrencyLabel = document.getElementById('modal-currency-label');
-        const modalMyrResult = document.getElementById('modal-myr-result');
-        const modalCurrencyResult = document.getElementById('modal-currency-result');
 
         // Store current modal state
         let currentModalCurrency = null;
@@ -1411,8 +1396,6 @@
             // Clear inputs
             modalMyrInput.value = '';
             modalCurrencyInput.value = '';
-            modalMyrResult.textContent = '';
-            modalCurrencyResult.textContent = '';
             
             // Show modal
             conversionModal.classList.add('active');
@@ -1437,10 +1420,8 @@
             if (!isNaN(myrValue) && myrValue >= 0 && currentModalRate) {
                 const result = myrValue * currentModalRate;
                 modalCurrencyInput.value = result.toFixed(2);
-                modalMyrResult.textContent = `= ${result.toFixed(2)} ${currentModalCurrency}`;
             } else {
                 modalCurrencyInput.value = '';
-                modalMyrResult.textContent = '';
             }
         }
 
@@ -1452,10 +1433,8 @@
             if (!isNaN(currencyValue) && currencyValue >= 0 && currentModalRate) {
                 const result = currencyValue / currentModalRate;
                 modalMyrInput.value = result.toFixed(2);
-                modalCurrencyResult.textContent = `= ${result.toFixed(2)} MYR`;
             } else {
                 modalMyrInput.value = '';
-                modalCurrencyResult.textContent = '';
             }
         }
 
