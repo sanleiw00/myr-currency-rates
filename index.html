@@ -336,6 +336,143 @@
         }
 
         /* ==========================================
+           Conversion Modal (Mobile)
+           ========================================== */
+        .conversion-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .conversion-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: var(--hover-bg);
+        }
+
+        .modal-rate-display {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-rate-display p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .modal-rate-display .rate-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-converter {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .modal-input-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-input-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .modal-result {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .modal-result strong {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        /* Mobile: Make rows clickable */
+        @media (max-width: 480px) {
+            tbody tr {
+                cursor: pointer;
+            }
+            
+            tbody tr:active {
+                background-color: #e5e7eb;
+            }
+        }
+
+        /* ==========================================
            Footer Styles
            ========================================== */
         footer {
@@ -444,6 +581,7 @@
             }
 
             .search-input {
+                width: 100%;
                 font-size: 0.85rem;
                 padding: 8px 10px;
             }
@@ -557,6 +695,35 @@
                     <!-- Currency rows will be inserted here by JavaScript -->
                 </tbody>
             </table>
+        </div>
+
+        <!-- Conversion Modal (Mobile) -->
+        <div id="conversion-modal" class="conversion-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="modal-currency-title">Currency Converter</div>
+                    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+                </div>
+                
+                <div class="modal-rate-display">
+                    <p>Current Rate</p>
+                    <div class="rate-value" id="modal-rate-value">1 MYR = 0.0000</div>
+                </div>
+                
+                <div class="modal-converter">
+                    <div class="modal-input-group">
+                        <label for="modal-myr-input">MYR Amount</label>
+                        <input type="number" id="modal-myr-input" placeholder="Enter MYR" step="0.01" min="0">
+                        <div class="modal-result" id="modal-myr-result"></div>
+                    </div>
+                    
+                    <div class="modal-input-group">
+                        <label for="modal-currency-input" id="modal-currency-label">Currency Amount</label>
+                        <input type="number" id="modal-currency-input" placeholder="Enter amount" step="0.01" min="0">
+                        <div class="modal-result" id="modal-currency-result"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer>
@@ -680,6 +847,19 @@
         const searchInput = document.getElementById('search-input');
         const searchResultsCount = document.getElementById('search-results-count');
         const clearAllBtn = document.getElementById('clear-all-btn');
+        const conversionModal = document.getElementById('conversion-modal');
+        const modalClose = document.getElementById('modal-close');
+        const modalCurrencyTitle = document.getElementById('modal-currency-title');
+        const modalRateValue = document.getElementById('modal-rate-value');
+        const modalMyrInput = document.getElementById('modal-myr-input');
+        const modalCurrencyInput = document.getElementById('modal-currency-input');
+        const modalCurrencyLabel = document.getElementById('modal-currency-label');
+        const modalMyrResult = document.getElementById('modal-myr-result');
+        const modalCurrencyResult = document.getElementById('modal-currency-result');
+
+        // Store current modal state
+        let currentModalCurrency = null;
+        let currentModalRate = null;
 
         // ==========================================
         // Main Application Logic
@@ -692,6 +872,7 @@
             loadExchangeRates();
             setupSearchListener();
             setupClearAllListener();
+            setupModalListeners();
         }
 
         /**
@@ -1132,6 +1313,19 @@
             row.appendChild(myrConverterCell);
             row.appendChild(currencyConverterCell);
             
+            // Add click handler for mobile (open conversion modal)
+            row.addEventListener('click', (e) => {
+                // Don't open modal if clicking on pin button or input fields
+                if (e.target.closest('.pin-btn') || e.target.closest('.converter-input')) {
+                    return;
+                }
+                
+                // Only open modal on mobile screens
+                if (window.innerWidth <= 480) {
+                    openConversionModal(currency, rate, countryName);
+                }
+            });
+            
             return row;
         }
 
@@ -1150,12 +1344,10 @@
          */
         function displayLastUpdated(timestamp) {
             const date = new Date(timestamp);
-            const formattedDate = date.toLocaleString('en-US', {
+            const formattedDate = date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+                day: 'numeric'
             });
             
             lastUpdatedElement.textContent = `Last updated: ${formattedDate}`;
@@ -1194,6 +1386,103 @@
          */
         function hideError() {
             errorMessageElement.classList.add('hidden');
+        }
+
+        // ==========================================
+        // Conversion Modal Functions (Mobile)
+        // ==========================================
+
+        /**
+         * Open conversion modal with currency data
+         * @param {string} currency - Currency code
+         * @param {number} rate - Exchange rate
+         * @param {string} countryName - Country/region name
+         */
+        function openConversionModal(currency, rate, countryName) {
+            currentModalCurrency = currency;
+            currentModalRate = rate;
+            
+            // Update modal content
+            modalCurrencyTitle.textContent = `${currency} - ${countryName}`;
+            modalRateValue.textContent = `1 MYR = ${rate.toFixed(4)} ${currency}`;
+            modalCurrencyLabel.textContent = `${currency} Amount`;
+            modalCurrencyInput.placeholder = `Enter ${currency}`;
+            
+            // Clear inputs
+            modalMyrInput.value = '';
+            modalCurrencyInput.value = '';
+            modalMyrResult.textContent = '';
+            modalCurrencyResult.textContent = '';
+            
+            // Show modal
+            conversionModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        /**
+         * Close conversion modal
+         */
+        function closeConversionModal() {
+            conversionModal.classList.remove('active');
+            document.body.style.overflow = '';
+            currentModalCurrency = null;
+            currentModalRate = null;
+        }
+
+        /**
+         * Handle MYR input in modal
+         */
+        function handleModalMyrInput() {
+            const myrValue = parseFloat(modalMyrInput.value);
+            if (!isNaN(myrValue) && myrValue >= 0 && currentModalRate) {
+                const result = myrValue * currentModalRate;
+                modalCurrencyInput.value = result.toFixed(2);
+                modalMyrResult.textContent = `= ${result.toFixed(2)} ${currentModalCurrency}`;
+            } else {
+                modalCurrencyInput.value = '';
+                modalMyrResult.textContent = '';
+            }
+        }
+
+        /**
+         * Handle currency input in modal
+         */
+        function handleModalCurrencyInput() {
+            const currencyValue = parseFloat(modalCurrencyInput.value);
+            if (!isNaN(currencyValue) && currencyValue >= 0 && currentModalRate) {
+                const result = currencyValue / currentModalRate;
+                modalMyrInput.value = result.toFixed(2);
+                modalCurrencyResult.textContent = `= ${result.toFixed(2)} MYR`;
+            } else {
+                modalMyrInput.value = '';
+                modalCurrencyResult.textContent = '';
+            }
+        }
+
+        /**
+         * Setup modal event listeners
+         */
+        function setupModalListeners() {
+            // Close button
+            modalClose.addEventListener('click', closeConversionModal);
+            
+            // Click outside modal to close
+            conversionModal.addEventListener('click', (e) => {
+                if (e.target === conversionModal) {
+                    closeConversionModal();
+                }
+            });
+            
+            // Input listeners
+            modalMyrInput.addEventListener('input', handleModalMyrInput);
+            modalCurrencyInput.addEventListener('input', handleModalCurrencyInput);
+            
+            // ESC key to close
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && conversionModal.classList.contains('active')) {
+                    closeConversionModal();
+                }
+            });
         }
 
         // ==========================================
