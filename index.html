@@ -1244,6 +1244,13 @@
             myrInput.step = '0.01';
             myrInput.min = '0';
             
+            // Prevent 'e', 'E', '+', '-' from being typed
+            myrInput.addEventListener('keydown', (e) => {
+                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                    e.preventDefault();
+                }
+            });
+            
             // Currency to MYR converter column
             const currencyConverterCell = document.createElement('td');
             const currencyInput = document.createElement('input');
@@ -1252,6 +1259,13 @@
             currencyInput.placeholder = `Enter ${currency}`;
             currencyInput.step = '0.01';
             currencyInput.min = '0';
+            
+            // Prevent 'e', 'E', '+', '-' from being typed
+            currencyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                    e.preventDefault();
+                }
+            });
             
             // Link the two inputs - typing in one updates the other
             let isUpdating = false; // Prevent infinite loop
@@ -1455,6 +1469,19 @@
             // Input listeners
             modalMyrInput.addEventListener('input', handleModalMyrInput);
             modalCurrencyInput.addEventListener('input', handleModalCurrencyInput);
+            
+            // Prevent 'e', 'E', '+', '-' from being typed in modal inputs
+            modalMyrInput.addEventListener('keydown', (e) => {
+                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                    e.preventDefault();
+                }
+            });
+            
+            modalCurrencyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                    e.preventDefault();
+                }
+            });
             
             // ESC key to close
             document.addEventListener('keydown', (e) => {
